@@ -6,23 +6,13 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 public class MyGdxGame extends ApplicationAdapter {
 
 	private MapGenerator gen;
-	private ShapeRenderer renderer;
 	private Camera camera;
 	private StretchViewport viewport;
-
-	private SpriteBatch batch;
-	private Texture texture;
 	
 	@Override
 	public void create () {
@@ -30,13 +20,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		viewport = new StretchViewport(256, 144, camera);
 		viewport.apply();
 
-		batch = new SpriteBatch();
-		texture = new Texture("badlogic.jpg");
-
 		this.gen = new MapGenerator(128, 72, 8);
 		gen.generate();
-
-		this.renderer = new ShapeRenderer();
 	}
 
 	@Override
@@ -44,11 +29,11 @@ public class MyGdxGame extends ApplicationAdapter {
 		Gdx.gl.glClearColor(1, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		renderer.setProjectionMatrix(camera.combined);
+		gen.updateRenderMatrix(camera.combined);
 
 		camera.update();
 
-		gen.render(renderer);
+		gen.render();
 
 		if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) gen.generate();
 		if (Gdx.input.isKeyPressed(Input.Keys.D)) {
