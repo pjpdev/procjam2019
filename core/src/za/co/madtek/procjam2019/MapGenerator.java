@@ -35,8 +35,6 @@ public class MapGenerator {
 
     private HashMap<String, TextureRegion[][]> layers;
     private ArrayList<TextureRegion> tiles;
-    private TextureRegion[][] waterLayer;
-    private TextureRegion[][] landLayer;
 
     public MapGenerator(int width, int height, int landmassModifier) {
         /*--------------------------------------------
@@ -68,7 +66,8 @@ public class MapGenerator {
 
         for (int x = 0; x < mapWidth; x++) {
             for (int y = 0; y < mapHeight; y++) {
-                batch.draw(waterLayer[x][y], mapX + (x * tileSize), mapY + (y * tileSize));
+                if (layers.get("Water")[x][y] != null) batch.draw(layers.get("Water")[x][y], mapX + (x * tileSize), mapY + (y * tileSize));
+                if (layers.get("Land")[x][y] != null) batch.draw(layers.get("Land")[x][y], mapX + (x * tileSize), mapY + (y * tileSize));
             }
         }
 
@@ -80,10 +79,12 @@ public class MapGenerator {
           Start generating map
          ---------------------------------------------*/
 
-        // Clear mapData
+        // Clear mapData and tilemaps
         for (int x = 0; x < mapWidth; x++) {
             for (int y = 0; y < mapHeight; y++) {
                 mapData[x][y] = 0;
+                layers.get("Water")[x][y] = null;
+                layers.get("Land")[x][y] = null;
             }
         }
 
@@ -212,26 +213,34 @@ public class MapGenerator {
         batch = new SpriteBatch();
 
         // Load tilesets
-        tilesetImg = new Texture("lpcnew.png");
+        tilesetImg = new Texture("procjamtileset.png");
 
         layers = new HashMap<String, TextureRegion[][]>();
-        waterLayer = new TextureRegion[mapWidth][mapHeight];
-        landLayer = new TextureRegion[mapWidth][mapHeight];
+        layers.put("Water", new TextureRegion[mapWidth][mapHeight]);
+        layers.put("Land", new TextureRegion[mapWidth][mapHeight]);
 
         tiles = new ArrayList<TextureRegion>();
 
-        tiles.add(new TextureRegion(tilesetImg, 0, 0, 16, 16)); // Water 0
-        tiles.add(new TextureRegion(tilesetImg, 32, 64, 16, 16)); // Land 1
-        tiles.add(new TextureRegion(tilesetImg, 16, 48, 16, 16)); // NW 2
-        tiles.add(new TextureRegion(tilesetImg, 32, 48, 16, 16)); // N 3
-        tiles.add(new TextureRegion(tilesetImg, 48, 48, 16, 16)); // NE 4
-        tiles.add(new TextureRegion(tilesetImg, 48, 64, 16, 16)); // E 5
-        tiles.add(new TextureRegion(tilesetImg, 48, 80, 16, 16)); // SE 6
-        tiles.add(new TextureRegion(tilesetImg, 32, 80, 16, 16)); // S 7
-        tiles.add(new TextureRegion(tilesetImg, 16, 80, 16, 16)); // SW 8
-        tiles.add(new TextureRegion(tilesetImg, 16, 64, 16, 16)); // W 9
-        tiles.add(new TextureRegion(tilesetImg, 64, 0, 16, 16)); // 10
-        tiles.add(new TextureRegion(tilesetImg, 64, 16, 16, 16)); // 11
+        tiles.add(new TextureRegion(tilesetImg, 48, 48, 16, 16)); // Water 0
+        tiles.add(new TextureRegion(tilesetImg, 16, 16, 16, 16)); // Land 1
+        tiles.add(new TextureRegion(tilesetImg, 0, 0, 16, 16)); // NW 2
+        tiles.add(new TextureRegion(tilesetImg, 16, 0, 16, 16)); // N 3
+        tiles.add(new TextureRegion(tilesetImg, 32, 0, 16, 16)); // NE 4
+        tiles.add(new TextureRegion(tilesetImg, 32, 16, 16, 16)); // E 5
+        tiles.add(new TextureRegion(tilesetImg, 32, 32, 16, 16)); // SE 6
+        tiles.add(new TextureRegion(tilesetImg, 16, 32, 16, 16)); // S 7
+        tiles.add(new TextureRegion(tilesetImg, 0, 32, 16, 16)); // SW 8
+        tiles.add(new TextureRegion(tilesetImg, 0, 16, 16, 16)); // W 9
+        tiles.add(new TextureRegion(tilesetImg, 48, 0, 16, 16)); // Single V N 10
+        tiles.add(new TextureRegion(tilesetImg, 48, 16, 16, 16)); // Single V M 11
+        tiles.add(new TextureRegion(tilesetImg, 48, 32, 16, 16)); // Single V S 12
+        tiles.add(new TextureRegion(tilesetImg, 0, 48, 16, 16)); // Single H W 13
+        tiles.add(new TextureRegion(tilesetImg, 16, 48, 16, 16)); // Single H M 14
+        tiles.add(new TextureRegion(tilesetImg, 32, 48, 16, 16)); // Single H E 15
+        tiles.add(new TextureRegion(tilesetImg, 80, 16, 16, 16)); // Inner C NW 16
+        tiles.add(new TextureRegion(tilesetImg, 64, 16, 16, 16)); // Inner C NE 17
+        tiles.add(new TextureRegion(tilesetImg, 64, 0, 16, 16)); // Inner C SE 18
+        tiles.add(new TextureRegion(tilesetImg, 80, 0, 16, 16)); // Inner C SW 19
     }
 
     private void processTilemap() {
@@ -239,8 +248,8 @@ public class MapGenerator {
           Process the tile map
          ---------------------------------------------*/
 
-        //TextureRegion[][] waterLayer = new TextureRegion[mapWidth][mapHeight];
-        //TextureRegion[][] landLayer = new TextureRegion[mapWidth][mapHeight];
+        TextureRegion[][] waterLayer = new TextureRegion[mapWidth][mapHeight];
+        TextureRegion[][] landLayer = new TextureRegion[mapWidth][mapHeight];
 
 
         // Process mapData
@@ -252,59 +261,53 @@ public class MapGenerator {
                 if (mapData[x][y] >= 1) {
                     // Check neigbours
 
-                    boolean[] dir = {false, false, false, false};
-
-                    //North
-                    if (y+1 < mapHeight && mapData[x][y+1] == 0) {
-                        dir[0] = true;
-                    }
-
-                    //East
-                    if (x+1 < mapWidth && mapData[x+1][y] == 0) {
-                        dir[1] = true;
-                    }
-
-                    //South
-                    if (y-1 > 0 && mapData[x][y-1] == 0) {
-                        dir[2] = true;
-                    }
-
-                    //West
-                    if (x-1 > 0 && mapData[x-1][y] == 0) {
-                        dir[3] = true;
-                    }
-
-                    if (dir[0] && !dir[1] && !dir[2] && !dir[3]) {
-                        waterLayer[x][y] = tiles.get(1);
-                        waterLayer[x][y+1] = tiles.get(3);
-                    } else if (dir[0] && dir[1] && !dir[2] && !dir[3]) {
-                        waterLayer[x][y] = tiles.get(1);
-                        waterLayer[x+1][y+1] = tiles.get(4);
-                    } else if (!dir[0] && dir[1] && !dir[2] && !dir[3]) {
-                        waterLayer[x][y] = tiles.get(5);
-                    } else if (!dir[0] && dir[1] && dir[2] && !dir[3]) {
-                        waterLayer[x][y] = tiles.get(6);
-                    } else if (!dir[0] && !dir[1] && dir[2] && !dir[3]) {
-                        waterLayer[x][y] = tiles.get(7);
-                    } else if (!dir[0] && !dir[1] && dir[2] && dir[3]) {
-                        waterLayer[x][y] = tiles.get(8);
-                    } else if (!dir[0] && !dir[1] && !dir[2] && dir[3]) {
-                        waterLayer[x][y] = tiles.get(9);
-                    } else if (dir[0] && !dir[1] && !dir[2] && dir[3]) {
-                        waterLayer[x][y] = tiles.get(9);
-                    } else if (dir[0] && dir[1] && !dir[2] && dir[3]) {
-                        waterLayer[x][y] = tiles.get(10);
-                    } else if (!dir[0] && dir[1] && !dir[2] && dir[3]) {
-                        waterLayer[x][y] = tiles.get(11);
+                    //Check basic N,W,S,E
+                    if (mapData[x][y+1] == 0 && mapData[x+1][y] != 0 && mapData[x][y-1] != 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(3);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] != 0 && mapData[x][y-1] == 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(7);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] != 0 && mapData[x][y-1] != 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(9);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] == 0 && mapData[x][y-1] != 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(5);
+                    } else if (mapData[x][y+1] == 0 && mapData[x+1][y] != 0 && mapData[x][y-1] != 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(2);
+                    } else if (mapData[x][y+1] == 0 && mapData[x+1][y] == 0 && mapData[x][y-1] != 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(4);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] == 0 && mapData[x][y-1] == 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(6);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] != 0 && mapData[x][y-1] == 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(8);
+                    } else if (mapData[x][y+1] == 0 && mapData[x+1][y] == 0 && mapData[x][y-1] != 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(10);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] == 0 && mapData[x][y-1] != 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(11);
+                    } else if (mapData[x][y+1] != 0 && mapData[x+1][y] == 0 && mapData[x][y-1] == 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(12);
+                    } else if (mapData[x][y+1] == 0 && mapData[x+1][y] != 0 && mapData[x][y-1] == 0 && mapData[x-1][y] == 0) {
+                        landLayer[x][y] = tiles.get(13);
+                    } else if (mapData[x][y+1] == 0 && mapData[x+1][y] != 0 && mapData[x][y-1] == 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(14);
+                    } else if (mapData[x][y+1] == 0 && mapData[x+1][y] == 0 && mapData[x][y-1] == 0 && mapData[x-1][y] != 0) {
+                        landLayer[x][y] = tiles.get(15);
+                    } else if (mapData[x-1][y+1] == 0) {
+                        landLayer[x][y] = tiles.get(16);
+                    } else if (mapData[x+1][y+1] == 0) {
+                        landLayer[x][y] = tiles.get(17);
+                    } else if (mapData[x+1][y-1] == 0) {
+                        landLayer[x][y] = tiles.get(18);
+                    } else if (mapData[x-1][y-1] == 0) {
+                        landLayer[x][y] = tiles.get(19);
                     } else {
-                        waterLayer[x][y] = tiles.get(1);
+                        landLayer[x][y] = tiles.get(1);
                     }
+
                 }
             }
         }
 
-        //layers.put("Water", waterLayer);
-        //layers.put("Land", landLayer);
+        layers.put("Water", waterLayer);
+        layers.put("Land", landLayer);
 
     }
 }
