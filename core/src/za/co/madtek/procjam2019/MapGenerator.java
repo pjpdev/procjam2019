@@ -3,8 +3,6 @@ package za.co.madtek.procjam2019;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.tiled.*;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Matrix4;
 
 import java.util.ArrayList;
@@ -68,6 +66,7 @@ public class MapGenerator {
             for (int y = 0; y < mapHeight; y++) {
                 if (layers.get("Water")[x][y] != null) batch.draw(layers.get("Water")[x][y], mapX + (x * tileSize), mapY + (y * tileSize));
                 if (layers.get("Land")[x][y] != null) batch.draw(layers.get("Land")[x][y], mapX + (x * tileSize), mapY + (y * tileSize));
+                if (layers.get("Mountains")[x][y] != null) batch.draw(layers.get("Mountains")[x][y], mapX + (x * tileSize), mapY + (y * tileSize));
             }
         }
 
@@ -100,16 +99,6 @@ public class MapGenerator {
         }
 
         processTilemap();
-
-        /*System.out.println("--- Map Data ---");
-        for (int x = 0; x < mapWidth; x++) {
-            System.out.print("[");
-            for (int y = 0; y < mapHeight; y++) {
-                System.out.print(Integer.toString(mapData[x][y]) + ",");
-            }
-            System.out.print("]\n");
-        }
-        System.out.println("--- End Of Map Data ---");*/
     }
 
     public void updateRenderMatrix(Matrix4 projection) {
@@ -218,6 +207,7 @@ public class MapGenerator {
         layers = new HashMap<String, TextureRegion[][]>();
         layers.put("Water", new TextureRegion[mapWidth][mapHeight]);
         layers.put("Land", new TextureRegion[mapWidth][mapHeight]);
+        layers.put("Mountains", new TextureRegion[mapWidth][mapHeight]);
 
         tiles = new ArrayList<TextureRegion>();
 
@@ -241,6 +231,7 @@ public class MapGenerator {
         tiles.add(new TextureRegion(tilesetImg, 64, 16, 16, 16)); // Inner C NE 17
         tiles.add(new TextureRegion(tilesetImg, 64, 0, 16, 16)); // Inner C SE 18
         tiles.add(new TextureRegion(tilesetImg, 80, 0, 16, 16)); // Inner C SW 19
+        tiles.add(new TextureRegion(tilesetImg, 64, 32, 16, 16)); // Mountains 20
     }
 
     private void processTilemap() {
@@ -250,6 +241,7 @@ public class MapGenerator {
 
         TextureRegion[][] waterLayer = new TextureRegion[mapWidth][mapHeight];
         TextureRegion[][] landLayer = new TextureRegion[mapWidth][mapHeight];
+        TextureRegion[][] mtnLayer = new TextureRegion[mapWidth][mapHeight];
 
 
         // Process mapData
@@ -303,11 +295,15 @@ public class MapGenerator {
                     }
 
                 }
+                if (mapData[x][y] >= 4) {
+                    mtnLayer[x][y] = tiles.get(20);
+                }
             }
         }
 
         layers.put("Water", waterLayer);
         layers.put("Land", landLayer);
+        layers.put("Mountains", mtnLayer);
 
     }
 }

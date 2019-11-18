@@ -20,7 +20,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		viewport = new StretchViewport(256, 144, camera);
 		viewport.apply();
 
-		this.gen = new MapGenerator(128, 72, 8);
+		this.gen = new MapGenerator(128, 72, 12);
 		gen.generate();
 	}
 
