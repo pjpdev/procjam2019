@@ -11,6 +11,7 @@ import java.util.Random;
 
 public class MapGenerator {
 
+    // Adding random comments
     private int mapWidth;
     private int mapHeight;
 
@@ -19,6 +20,7 @@ public class MapGenerator {
 
     private int landmassModifier;
 
+    // Here and there
     private int tilesUsed;
 
     private Random rnd;
@@ -31,6 +33,7 @@ public class MapGenerator {
 
     private Texture tilesetImg;
 
+    // Derp!!!
     private HashMap<String, TextureRegion[][]> layers;
     private ArrayList<TextureRegion> tiles;
 
